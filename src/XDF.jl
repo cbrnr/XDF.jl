@@ -20,9 +20,9 @@ CHUNK_TYPE = Dict(1=>"FileHeader",
 Read XDF file.
 """
 function read_xdf(filename::AbstractString)
+    counter = Dict(zip(keys(CHUNK_TYPE), zeros(Int, 6)))  # count chunks per type
     open(filename) do io
         String(read(io, 4)) == "XDF:" || error("invalid magic bytes sequence")
-        n = 1  # chunk number
         while true
             len = try
                 len = read_varlen_int(io)
@@ -30,7 +30,8 @@ function read_xdf(filename::AbstractString)
                 isa(e, EOFError) && break
             end
             tag = read(io, UInt16)
-            @debug "##### Chunk $n: $(CHUNK_TYPE[tag]) (tag $tag), length $len bytes"
+            counter[tag] += 1
+            @debug "Chunk $(sum(values(counter))): $(CHUNK_TYPE[tag]) ($tag), $len bytes"
             len -= 2
             if tag == 1  # FileHeader
                 xml = String(read(io, len))
@@ -44,9 +45,13 @@ function read_xdf(filename::AbstractString)
             else
                 skip(io, len)  # TODO: read chunk-specific contents
             end
-            n += 1
         end
     end
+    msg = "File $filename contains the following $(sum(values(counter))) chunks:\n"
+    for (key, value) in sort(collect(counter))
+        msg *= "- $(CHUNK_TYPE[key]): $value\n"
+    end
+    @info msg
 end
 
 
@@ -63,6 +68,7 @@ function read_varlen_int(io::IO)
 end
 
 
+# ENV["JULIA_DEBUG"] = "Main"
 read_xdf("/Users/clemens/Downloads/testfiles/minimal.xdf")
 
 # end
