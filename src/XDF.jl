@@ -21,6 +21,7 @@ Read XDF file.
 """
 function read_xdf(filename::AbstractString)
     counter = Dict(zip(keys(CHUNK_TYPE), zeros(Int, 6)))  # count chunks per type
+    streams = Dict()
     open(filename) do io
         String(read(io, 4)) == "XDF:" || error("invalid magic bytes sequence")
         while true
@@ -32,13 +33,26 @@ function read_xdf(filename::AbstractString)
             tag = read(io, UInt16)
             counter[tag] += 1
             @debug "Chunk $(sum(values(counter))): $(CHUNK_TYPE[tag]) ($tag), $len bytes"
-            len -= 2
+            len -= sizeof(UInt16)
             if tag == 1  # FileHeader
                 xml = String(read(io, len))
                 @debug xml
-            elseif tag == 2 || tag == 6  # StreamHeader or StreamFooter
+            elseif tag == 2  # StreamHeader
                 id = read(io, Int32)  # TODO: should this be UInt32?
-                len -= 4
+                len -= sizeof(Int32)
+                @debug "StreamID: $id"
+                xml = String(read(io, len))
+                @debug xml
+                streams[id] = Dict("channel_count"=>findtag(xml, "channel_count", Int),
+                                   "nominal_srate"=>findtag(xml, "nominal_srate", Float32),
+                                   "channel_format"=>findtag(xml, "channel_format"),
+                                   "name"=>findtag(xml, "name"),
+                                   "type"=>findtag(xml, "type"),
+                                   "timeseries"=>[],  # TODO: type == channel_format?
+                                   "timestamps"=>[])  # TODO: type == Float64?
+            elseif tag == 6  # StreamFooter
+                id = read(io, Int32)  # TODO: should this be UInt32?
+                len -= sizeof(Int32)
                 @debug "StreamID: $id"
                 xml = String(read(io, len))
                 @debug xml
@@ -47,11 +61,15 @@ function read_xdf(filename::AbstractString)
             end
         end
     end
-    msg = "File $filename contains the following $(sum(values(counter))) chunks:\n"
+    total = sum(values(counter))  # total number of chunks
+    width = length(string(total))
+    width_chunk = maximum([length(v) for v in values(CHUNK_TYPE)])
+    msg = "File $filename contains $total chunks:\n"
     for (key, value) in sort(collect(counter))
-        msg *= "- $(CHUNK_TYPE[key]): $value\n"
+        msg *= "- $(rpad(CHUNK_TYPE[key], width_chunk)) $(lpad(value, width))\n"
     end
     @info msg
+    return streams
 end
 
 
@@ -68,7 +86,21 @@ function read_varlen_int(io::IO)
 end
 
 
+"Find XML tag and return its content."
+function findtag(xml::AbstractString, tag::AbstractString, type=String::DataType)
+    m = match(Regex("<$tag>(.*)</$tag>"), xml)
+    if !isnothing(m)
+        content = m.captures[1]
+        if type == String
+            return content
+        else
+            return parse(type, content)
+        end
+    end
+end
+
+
 # ENV["JULIA_DEBUG"] = "Main"
-read_xdf("/Users/clemens/Downloads/testfiles/minimal.xdf")
+read_xdf("/Users/clemens/Downloads/testfiles/XDF/minimal.xdf")
 
 # end
