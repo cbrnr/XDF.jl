@@ -34,13 +34,17 @@ function read_xdf(filename::AbstractString)
             counter[tag] += 1
             @debug "Chunk $(sum(values(counter))): $(CHUNK_TYPE[tag]) ($tag), $len bytes"
             len -= sizeof(UInt16)
+
+            if tag in (2, 3, 4, 6)  # read stream ID
+                id = read(io, Int32)  # TODO: should this be UInt32?
+                len -= sizeof(Int32)
+                @debug "StreamID: $id"
+            end
+
             if tag == 1  # FileHeader
                 xml = String(read(io, len))
                 @debug xml
             elseif tag == 2  # StreamHeader
-                id = read(io, Int32)  # TODO: should this be UInt32?
-                len -= sizeof(Int32)
-                @debug "StreamID: $id"
                 xml = String(read(io, len))
                 @debug xml
                 streams[id] = Dict("channel_count"=>findtag(xml, "channel_count", Int),
@@ -51,9 +55,6 @@ function read_xdf(filename::AbstractString)
                                    "timeseries"=>[],  # TODO: type == channel_format?
                                    "timestamps"=>[])  # TODO: type == Float64?
             elseif tag == 6  # StreamFooter
-                id = read(io, Int32)  # TODO: should this be UInt32?
-                len -= sizeof(Int32)
-                @debug "StreamID: $id"
                 xml = String(read(io, len))
                 @debug xml
             else
