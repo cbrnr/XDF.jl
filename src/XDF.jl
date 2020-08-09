@@ -13,6 +13,14 @@ CHUNK_TYPE = Dict(1=>"FileHeader",
                   5=>"Boundary",
                   6=>"StreamFooter")
 
+DATA_TYPE = Dict("int8"=>Int8,
+                 "int16"=>Int16,
+                 "int32"=>Int32,
+                 "int64"=>Int64,
+                 "float32"=>Float32,
+                 "float64"=>Float64,
+                 "string"=>String)
+
 
 """
     read_xdf(filename::AbstractString)
@@ -38,15 +46,15 @@ function read_xdf(filename::AbstractString)
             if tag in (2, 3, 4, 6)  # read stream ID
                 id = read(io, Int32)  # TODO: should this be UInt32?
                 len -= sizeof(Int32)
-                @debug "StreamID: $id"
+                @debug "    StreamID: $id"
             end
 
             if tag == 1  # FileHeader
                 xml = String(read(io, len))
-                @debug xml
+                @debug "    $xml"
             elseif tag == 2  # StreamHeader
                 xml = String(read(io, len))
-                @debug xml
+                @debug "    $xml"
                 streams[id] = Dict("channel_count"=>findtag(xml, "channel_count", Int),
                                    "nominal_srate"=>findtag(xml, "nominal_srate", Float32),
                                    "channel_format"=>findtag(xml, "channel_format"),
@@ -54,9 +62,34 @@ function read_xdf(filename::AbstractString)
                                    "type"=>findtag(xml, "type"),
                                    "timeseries"=>[],  # TODO: type == channel_format?
                                    "timestamps"=>[])  # TODO: type == Float64?
+            elseif tag == 3  # Samples
+                mark(io)
+                nchans = streams[id]["channel_count"]
+                dtype = DATA_TYPE[streams[id]["channel_format"]]
+                nsamples = read_varlen_int(io)
+                @debug "    nchans: $nchans, nsamples: $nsamples, dtype: $dtype"
+                samples = Array{dtype}(undef, nsamples, nchans)
+                if dtype == String  # TODO: string samples
+                    reset(io)
+                    skip(io, len)
+                    continue
+                end
+                for sample in 1:nsamples
+                    @debug "    ---- Sample $sample/$nsamples"
+                    if read(io, UInt8) == 8  # optional timestamp available
+                        timestamp = read(io, Float64)
+                        @debug "         Timestamp $timestamp"
+                    end
+                    for ch in 1:nchans
+                        samples[sample, ch] = read(io, dtype)
+                        @debug "        $(samples[sample, ch])"
+                    end
+                end
+                reset(io)
+                skip(io, len)
             elseif tag == 6  # StreamFooter
                 xml = String(read(io, len))
-                @debug xml
+                @debug "    $xml"
             else
                 skip(io, len)  # TODO: read chunk-specific contents
             end
