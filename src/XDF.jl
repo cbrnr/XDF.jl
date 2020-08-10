@@ -123,14 +123,8 @@ end
 "Find XML tag and return its content."
 function findtag(xml::AbstractString, tag::AbstractString, type=String::DataType)
     m = match(Regex("<$tag>(.*)</$tag>"), xml)
-    if !isnothing(m)
-        content = m.captures[1]
-        if type == String
-            return content
-        else
-            return parse(type, content)
-        end
-    end
+    content = isnothing(m) ? nothing : m[1]
+    return isnothing(content) || type == String ? content : parse(type, content)
 end
 
 
