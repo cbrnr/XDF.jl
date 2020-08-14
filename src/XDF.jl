@@ -1,9 +1,11 @@
 # Authors: Clemens Brunner
 # License: BSD (3-clause)
 
-# module XDF
+module XDF
 
-using Logging
+export read_xdf
+
+using Logging: @info, @debug
 
 
 CHUNK_TYPE = Dict(1=>"FileHeader",
@@ -134,8 +136,4 @@ function findtag(xml::AbstractString, tag::AbstractString, type=String::DataType
     return isnothing(content) || type == String ? content : parse(type, content)
 end
 
-
-# ENV["JULIA_DEBUG"] = "Main"
-read_xdf("/Users/clemens/Downloads/testfiles/XDF/minimal.xdf")
-
-# end
+end
