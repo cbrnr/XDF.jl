@@ -59,9 +59,10 @@ function read_xdf(filename::AbstractString)
                                    "nominal_srate"=>findtag(xml, "nominal_srate", Float32),
                                    "channel_format"=>findtag(xml, "channel_format"),
                                    "name"=>findtag(xml, "name"),
-                                   "type"=>findtag(xml, "type"),
-                                   "timeseries"=>[],  # TODO: type == channel_format?
-                                   "timestamps"=>[])  # TODO: type == Float64?
+                                   "type"=>findtag(xml, "type"))
+                dtype = DATA_TYPE[streams[id]["channel_format"]]
+                streams[id]["data"] = []
+                streams[id]["time"] = Array{Float64}(undef, 0)
             elseif tag == 3  # Samples
                 mark(io)
                 nchans = streams[id]["channel_count"]
@@ -69,6 +70,7 @@ function read_xdf(filename::AbstractString)
                 nsamples = read_varlen_int(io)
                 @debug "    nchans: $nchans, nsamples: $nsamples, dtype: $dtype"
                 samples = Array{dtype}(undef, nsamples, nchans)
+                @debug "    samples array: $(typeof(samples)) - $(size(samples))"
                 if dtype == String  # TODO: string samples
                     reset(io)
                     skip(io, len)
@@ -78,12 +80,12 @@ function read_xdf(filename::AbstractString)
                     @debug "    ---- Sample $sample/$nsamples"
                     if read(io, UInt8) == 8  # optional timestamp available
                         timestamp = read(io, Float64)
-                        @debug "         Timestamp $timestamp"
                     end
                     for ch in 1:nchans
                         samples[sample, ch] = read(io, dtype)
-                        @debug "        $(samples[sample, ch])"
                     end
+                    #@debug "    Final samples array: $samples"
+                    push!(streams[id]["data"], samples)
                 end
                 reset(io)
                 skip(io, len)
@@ -95,6 +97,11 @@ function read_xdf(filename::AbstractString)
             end
         end
     end
+
+    for (key, value) in streams
+        value["data"] = vcat(value["data"]...)
+    end
+
     total = sum(values(counter))  # total number of chunks
     width = length(string(total))
     width_chunk = maximum([length(v) for v in values(CHUNK_TYPE)])
