@@ -30,7 +30,7 @@ DATA_TYPE = Dict("int8"=>Int8,
 Read XDF file.
 """
 function read_xdf(filename::AbstractString)
-    counter = Dict(zip(keys(CHUNK_TYPE), zeros(Int, 6)))  # count chunks per type
+    counter = Dict(zip(keys(CHUNK_TYPE), zeros(Int, length(CHUNK_TYPE))))  # count chunks
     streams = Dict()
     open(filename) do io
         String(read(io, 4)) == "XDF:" || error("invalid magic bytes sequence")
