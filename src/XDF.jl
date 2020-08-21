@@ -20,7 +20,7 @@ DATA_TYPE = Dict("int8"=>Int8,
                  "int32"=>Int32,
                  "int64"=>Int64,
                  "float32"=>Float32,
-                 "float64"=>Float64,
+                 "double64"=>Float64,
                  "string"=>String)
 
 
@@ -30,10 +30,13 @@ DATA_TYPE = Dict("int8"=>Int8,
 Read XDF file.
 """
 function read_xdf(filename::AbstractString)
+    streams = Dict{Int, Any}()
     counter = Dict(zip(keys(CHUNK_TYPE), zeros(Int, length(CHUNK_TYPE))))  # count chunks
-    streams = Dict()
+
     open(filename) do io
         String(read(io, 4)) == "XDF:" || error("invalid magic bytes sequence")
+
+        # first pass, determine data size for each stream
         while true
             len = try
                 len = read_varlen_int(io)
@@ -46,8 +49,8 @@ function read_xdf(filename::AbstractString)
             len -= sizeof(UInt16)
 
             if tag in (2, 3, 4, 6)  # read stream ID
-                id = read(io, Int32)  # TODO: should this be UInt32?
-                len -= sizeof(Int32)
+                id = Int(read(io, UInt32))
+                len -= sizeof(UInt32)
                 @debug "    StreamID: $id"
             end
 
@@ -57,51 +60,85 @@ function read_xdf(filename::AbstractString)
             elseif tag == 2  # StreamHeader
                 xml = String(read(io, len))
                 @debug "    $xml"
-                streams[id] = Dict("channel_count"=>findtag(xml, "channel_count", Int),
-                                   "nominal_srate"=>findtag(xml, "nominal_srate", Float32),
-                                   "channel_format"=>findtag(xml, "channel_format"),
+                streams[id] = Dict("nchannels"=>findtag(xml, "channel_count", Int),
+                                   "srate"=>findtag(xml, "nominal_srate", Float32),
                                    "name"=>findtag(xml, "name"),
                                    "type"=>findtag(xml, "type"))
-                dtype = DATA_TYPE[streams[id]["channel_format"]]
-                streams[id]["data"] = []
+                streams[id]["dtype"] = DATA_TYPE[findtag(xml, "channel_format")]
+                streams[id]["data"] = 0
                 streams[id]["time"] = Array{Float64}(undef, 0)
             elseif tag == 3  # Samples
                 mark(io)
-                nchans = streams[id]["channel_count"]
-                dtype = DATA_TYPE[streams[id]["channel_format"]]
+                nchannels = streams[id]["nchannels"]
+                dtype = streams[id]["dtype"]
                 nsamples = read_varlen_int(io)
-                @debug "    nchans: $nchans, nsamples: $nsamples, dtype: $dtype"
-                samples = Array{dtype}(undef, nsamples, nchans)
-                @debug "    samples array: $(typeof(samples)) - $(size(samples))"
-                if dtype == String  # TODO: string samples
-                    reset(io)
-                    skip(io, len)
-                    continue
-                end
-                for sample in 1:nsamples
-                    @debug "    ---- Sample $sample/$nsamples"
-                    if read(io, UInt8) == 8  # optional timestamp available
-                        timestamp = read(io, Float64)
-                    end
-                    for ch in 1:nchans
-                        samples[sample, ch] = read(io, dtype)
-                    end
-                    #@debug "    Final samples array: $samples"
-                    push!(streams[id]["data"], samples)
-                end
+                @debug "    nchans: $nchannels, nsamples: $nsamples, dtype: $dtype"
+                streams[id]["data"] += nsamples
                 reset(io)
                 skip(io, len)
             elseif tag == 6  # StreamFooter
                 xml = String(read(io, len))
                 @debug "    $xml"
-            else
-                skip(io, len)  # TODO: read chunk-specific contents
+            else  # unknown chunk type
+                skip(io, len)
             end
         end
-    end
 
-    for (key, value) in streams
-        value["data"] = vcat(value["data"]...)
+        # second pass, read actual data for each stream in pre-allocated arrays
+        current_sample = Dict()
+        current_time = Dict()
+        for (id, stream) in streams
+            dtype = stream["dtype"]
+            nsamples = stream["data"]
+            nchannels = stream["nchannels"]
+            stream["data"] = Array{dtype}(undef, nsamples, nchannels)
+            stream["time"] = Array{Float64}(undef, nsamples)
+            current_sample[id] = 1
+            current_time[id] = 0
+        end
+        seek(io, 4)  # go back to start of file (but skip the magic bytes)
+        while true
+            len = try
+                len = read_varlen_int(io)
+            catch e
+                isa(e, EOFError) && break
+            end
+            tag = read(io, UInt16)
+            len -= sizeof(UInt16)
+
+            if tag != 3
+                skip(io, len)
+            else
+                id = Int(read(io, UInt32))
+                len -= sizeof(UInt32)
+                mark(io)
+                nchannels = streams[id]["nchannels"]
+                dtype = streams[id]["dtype"]
+                nsamples = read_varlen_int(io)
+                if streams[id]["dtype"] === String  # TODO: string samples
+                    reset(io)
+                    skip(io, len)
+                    continue
+                end
+                sample = Array{dtype}(undef, nsamples, nchannels)
+                timestamps = Array{Float64}(undef, nsamples)
+                for i in 1:nsamples
+                    @debug "    ---- Sample $i/$nsamples"
+                    if read(io, UInt8) == 8  # optional timestamp available
+                        timestamps[i] = read(io, Float64)
+                    else
+                        timestamps[i] = current_time[id] + 1 / streams[id]["srate"]
+                    end
+                    current_time[id] = timestamps[i]
+                    sample[i, :] = reinterpret(dtype, read(io, sizeof(dtype) * nchannels))
+                end
+                start = current_sample[id]
+                stop = start + size(sample, 1) - 1
+                streams[id]["data"][start:stop, :] = sample
+                streams[id]["time"][start:stop] = timestamps
+                current_sample[id] = stop + 1
+            end
+        end
     end
 
     total = sum(values(counter))  # total number of chunks
@@ -112,6 +149,7 @@ function read_xdf(filename::AbstractString)
         msg *= "- $(rpad(CHUNK_TYPE[key], width_chunk)) $(lpad(value, width))\n"
     end
     @info msg
+
     return streams
 end
 
