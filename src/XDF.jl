@@ -36,7 +36,7 @@ function read_xdf(filename::AbstractString)
     open(filename) do io
         String(read(io, 4)) == "XDF:" || error("invalid magic bytes sequence")
 
-        # first pass, determine data size for each stream
+        # first pass, determine array size for each stream
         while true
             len = try
                 len = read_varlen_int(io)
@@ -49,7 +49,7 @@ function read_xdf(filename::AbstractString)
             len -= sizeof(UInt16)
 
             if tag in (2, 3, 4, 6)  # read stream ID
-                id = Int(read(io, UInt32))
+                id = Int(read(io, UInt32))  # convert because Julia displays UInt32 as hex
                 len -= sizeof(UInt32)
                 @debug "    StreamID: $id"
             end
@@ -164,7 +164,7 @@ function read_varlen_int(io::IO)
 end
 
 
-"Find XML tag and return its content."
+"Find XML tag and return its content (optionally converted to specified type)."
 function findtag(xml::AbstractString, tag::AbstractString, type=String::DataType)
     m = match(Regex("<$tag>(.*)</$tag>"), xml)
     content = isnothing(m) ? nothing : m[1]
