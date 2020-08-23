@@ -90,16 +90,14 @@ function read_xdf(filename::AbstractString)
         end
 
         # second pass, read actual data for each stream in pre-allocated arrays
-        current_sample = Dict()
-        current_time = Dict()
+        index = Dict()
         for (id, stream) in streams
             dtype = stream["dtype"]
             nsamples = stream["data"]
             nchannels = stream["nchannels"]
             stream["data"] = Array{dtype}(undef, nsamples, nchannels)
             stream["time"] = Array{Float64}(undef, nsamples)
-            current_sample[id] = 1
-            current_time[id] = 0
+            index[id] = 1  # current sample index
         end
         seek(io, 4)  # go back to start of file (but skip the magic bytes)
         while true
@@ -125,23 +123,17 @@ function read_xdf(filename::AbstractString)
                     skip(io, len)
                     continue
                 end
-                sample = Array{dtype}(undef, nsamples, nchannels)
-                timestamps = Array{Float64}(undef, nsamples)
                 for i in 1:nsamples
-                    @debug "    ---- Sample $i/$nsamples"
                     if read(io, UInt8) == 8  # optional timestamp available
-                        timestamps[i] = read(io, Float64)
+                        streams[id]["time"][index[id]] = read(io, Float64)
                     else
-                        timestamps[i] = current_time[id] + 1 / streams[id]["srate"]
+                        delta = 1 / streams[id]["srate"]
+                        previous = index[id] == 1 ? 0 : streams[id]["time"][index[id] - 1]
+                        streams[id]["time"][index[id]] = previous + delta
                     end
-                    current_time[id] = timestamps[i]
-                    sample[i, :] = reinterpret(dtype, read(io, sizeof(dtype) * nchannels))
+                    streams[id]["data"][index[id], :] = reinterpret(dtype, read(io, sizeof(dtype) * nchannels))
+                    index[id] += 1
                 end
-                start = current_sample[id]
-                stop = start + size(sample, 1) - 1
-                streams[id]["data"][start:stop, :] = sample
-                streams[id]["time"][start:stop] = timestamps
-                current_sample[id] = stop + 1
             end
         end
     end
