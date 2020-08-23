@@ -89,7 +89,7 @@ function read_xdf(filename::AbstractString)
             end
         end
 
-        # second pass, read actual data for each stream in pre-allocated arrays
+        # second pass, read actual data for each stream into pre-allocated arrays
         index = Dict()
         for (id, stream) in streams
             dtype = stream["dtype"]
