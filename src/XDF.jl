@@ -67,6 +67,8 @@ function read_xdf(filename::AbstractString)
                 streams[id]["dtype"] = DATA_TYPE[findtag(xml, "channel_format")]
                 streams[id]["data"] = 0
                 streams[id]["time"] = Array{Float64}(undef, 0)
+                streams[id]["clock"] = Float64[]
+                streams[id]["offset"] = Float64[]
             elseif tag == 3  # Samples
                 mark(io)
                 nchannels = streams[id]["nchannels"]
@@ -76,6 +78,9 @@ function read_xdf(filename::AbstractString)
                 streams[id]["data"] += nsamples
                 reset(io)
                 skip(io, len)
+            elseif tag == 4  # ClockOffset
+                push!(streams[id]["clock"], read(io, Float64))
+                push!(streams[id]["offset"], read(io, Float64))
             elseif tag == 6  # StreamFooter
                 xml = String(read(io, len))
                 @debug "    $xml"
