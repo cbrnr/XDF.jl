@@ -1,3 +1,5 @@
+![License](https://img.shields.io/github/license/cbrnr/XDF.jl)
+
 XDF.jl
 ======
 XDF.jl is an importer for [XDF files](https://github.com/sccn/xdf/wiki/Specifications) written in Julia. This packages exposes the `read_xdf` function, which handles everything needed to load the contents of XDF files, including synchronizing time stamps of different streams.
@@ -5,7 +7,7 @@ XDF.jl is an importer for [XDF files](https://github.com/sccn/xdf/wiki/Specifica
 Currently, XDF.jl is not available as a Julia package yet, so the easiest way to try it out is to download the complete source code and then activate the root folder of this project in Julia, i.e. set the working directory to the root folder and activate it in the package prompt (hit `]`) with `activate .`.
 
 ## Example
-Assuming that the file `minimal.xdf` is in the current working directory, loading the file is as simple as:
+Assuming that the file `minimal.xdf` is in the current working directory, loading it is as simple as:
 ```julia
 using XDF
 
