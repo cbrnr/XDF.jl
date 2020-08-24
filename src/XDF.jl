@@ -147,6 +147,13 @@ function read_xdf(filename::AbstractString)
     end
     @info msg
 
+    for (id, stream) in streams
+        offsets = hcat(stream["clock"], stream["offset"])
+        stream["time"] = sync_clock(stream["time"], offsets)
+        delete!(stream, "clock")
+        delete!(stream, "offset")
+    end
+
     return streams
 end
 
@@ -169,6 +176,15 @@ function findtag(xml::AbstractString, tag::AbstractString, type=String::DataType
     m = match(Regex("<$tag>(.*)</$tag>"), xml)
     content = isnothing(m) ? nothing : m[1]
     return isnothing(content) || type == String ? content : parse(type, content)
+end
+
+
+"Synchronize clock values by their given offsets."
+function sync_clock(time::Array{Float64,1}, offsets::Array{Float64,2})
+    x = hcat(ones(size(offsets, 1), 1), offsets[:, 1])
+    y = offsets[:, 2]
+    coefs = x \ y
+    return time .+ (coefs[1] .+ coefs[2] .* time)
 end
 
 end
