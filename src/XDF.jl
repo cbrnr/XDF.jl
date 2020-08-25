@@ -25,11 +25,11 @@ DATA_TYPE = Dict("int8"=>Int8,
 
 
 """
-    read_xdf(filename::AbstractString)
+    read_xdf(filename::AbstractString, sync::Bool=true)
 
-Read XDF file.
+Read XDF file and optionally sync streams (default true).
 """
-function read_xdf(filename::AbstractString)
+function read_xdf(filename::AbstractString, sync::Bool=true)
     streams = Dict{Int, Any}()
     counter = Dict(zip(keys(CHUNK_TYPE), zeros(Int, length(CHUNK_TYPE))))  # count chunks
 
@@ -147,11 +147,11 @@ function read_xdf(filename::AbstractString)
     end
     @info msg
 
-    for (id, stream) in streams
-        offsets = hcat(stream["clock"], stream["offset"])
-        stream["time"] = sync_clock(stream["time"], offsets)
-        delete!(stream, "clock")
-        delete!(stream, "offset")
+    if sync
+        for (id, stream) in streams
+            offsets = hcat(stream["clock"], stream["offset"])
+            stream["time"] = sync_clock(stream["time"], offsets)
+        end
     end
 
     return streams
