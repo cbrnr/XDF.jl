@@ -4,6 +4,7 @@ XDF.jl
 ======
 XDF.jl is an importer for [XDF files](https://github.com/sccn/xdf/wiki/Specifications) written in Julia. This packages exposes the `read_xdf` function, which handles everything needed to load the contents of XDF files, including synchronizing time stamps of different streams.
 
+## Installation
 Use the package manager to add XDF.jl by typing `] add XDF` in the Julia REPL.
 
 ## Example
