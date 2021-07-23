@@ -37,12 +37,8 @@ function read_xdf(filename::AbstractString, sync::Bool=true)
         String(read(io, 4)) == "XDF:" || error("invalid magic bytes sequence")
 
         # first pass, determine array size for each stream
-        while true
-            len = try
-                len = read_varlen_int(io)
-            catch e
-                isa(e, EOFError) && break
-            end
+        while !eof(io)
+            len = read_varlen_int(io)
             tag = read(io, UInt16)
             counter[tag] += 1
             @debug "Chunk $(sum(values(counter))): $(CHUNK_TYPE[tag]) ($tag), $len bytes"
@@ -100,12 +96,8 @@ function read_xdf(filename::AbstractString, sync::Bool=true)
             index[id] = 1  # current sample index
         end
         seek(io, 4)  # go back to start of file (but skip the magic bytes)
-        while true
-            len = try
-                len = read_varlen_int(io)
-            catch e
-                isa(e, EOFError) && break
-            end
+        while !eof(io)
+            len = read_varlen_int(io)
             tag = read(io, UInt16)
             len -= sizeof(UInt16)
 
