@@ -1,19 +1,10 @@
 using XDF
 using Test
-using DataDeps
 
-# Register data sources
-register(DataDep(
-    "ExampleXDF",
-    "Example XDF files from github: xdf-modules/example-files",
-    [
-        "https://github.com/xdf-modules/example-files/blob/master/minimal.xdf?raw=true",
-        "https://github.com/xdf-modules/example-files/blob/master/data_with_clock_resets.xdf?raw=true"
-    ]
-))
+# Minimal XDF file
+url = "https://github.com/xdf-modules/example-files/blob/master/minimal.xdf?raw=true"
 
-
-streams = read_xdf(joinpath(datadep"ExampleXDF", "minimal.xdf"))
+streams = read_xdf(download(url))
 @test 0 in keys(streams)
 @test streams[0]["nchannels"] == 3
 @test streams[0]["name"] == "SendDataC"
@@ -30,7 +21,10 @@ streams = read_xdf(joinpath(datadep"ExampleXDF", "minimal.xdf"))
 @test streams[46202862]["type"] == "StringMarker"
 @test size(streams[46202862]["data"]) == (9,1)
 
-streams = read_xdf(joinpath(datadep"ExampleXDF", "data_with_clock_resets.xdf"))
+# XDF file with clock resets
+url = "https://github.com/xdf-modules/example-files/blob/master/data_with_clock_resets.xdf?raw=true"
+
+streams = read_xdf(download(url))
 @test 1 in keys(streams)
 @test streams[1]["nchannels"] == 1
 @test streams[1]["name"] == "MyMarkerStream"
