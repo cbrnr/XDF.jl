@@ -1,9 +1,9 @@
-using XDF, Test
+using XDF, Downloads, Test
 
 @testset "Minimal XDF file" begin
     url = "https://github.com/xdf-modules/example-files/blob/master/minimal.xdf?raw=true"
 
-    streams = read_xdf(download(url))
+    streams = read_xdf(Downloads.download(url))
     @test 0 in keys(streams)
     @test streams[0]["nchannels"] == 3
     @test streams[0]["name"] == "SendDataC"
@@ -24,7 +24,7 @@ end
 @testset "XDF file with clock resets" begin
     url = "https://github.com/xdf-modules/example-files/blob/master/data_with_clock_resets.xdf?raw=true"
 
-    streams = read_xdf(download(url))
+    streams = read_xdf(Downloads.download(url))
     @test 1 in keys(streams)
     @test streams[1]["nchannels"] == 1
     @test streams[1]["name"] == "MyMarkerStream"
