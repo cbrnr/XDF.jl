@@ -1,5 +1,4 @@
-using XDF
-using Test
+using XDF, Test
 
 @testset "Minimal XDF file" begin
     url = "https://github.com/xdf-modules/example-files/blob/master/minimal.xdf?raw=true"
