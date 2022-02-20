@@ -19,6 +19,8 @@ using XDF, Downloads, Test
     @test streams[46202862]["srate"] == 10.0
     @test streams[46202862]["type"] == "StringMarker"
     @test size(streams[46202862]["data"]) == (9, 1)
+    @test streams[46202862]["data"][2:end,1] == ["Hello", "World", "from", "LSL", "Hello", "World", "from", "LSL"]
+    @test streams[46202862]["data"][1,1] == """<?xml version="1.0"?><info><writer>LabRecorder xdfwriter</writer><first_timestamp>5.1</first_timestamp><last_timestamp>5.9</last_timestamp><sample_count>9</sample_count><clock_offsets><offset><time>50979.76</time><value>-.01</value></offset><offset><time>50979.86</time><value>-.02</value></offset></clock_offsets></info>"""
 end
 
 @testset "XDF file with clock resets" begin
