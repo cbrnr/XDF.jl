@@ -19,7 +19,7 @@ streams = read_xdf("minimal.xdf")
 This package is currently in an early stage, so here's an overview of what doesn't work (yet):
 
 - [ ] Time synchronization (via linear regression) is always performed, this will be changed to an optional parameter
-- [ ] The complete XML headers and footers of streams are not yet available in the output
+- [x] The complete XML headers and footers of streams are not yet available in the output
 - [ ] Dejittering of streams with regular sampling rates is not available yet
 - [ ] Loading only specific streams does not work yet
 

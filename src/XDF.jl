@@ -56,15 +56,26 @@ function read_xdf(filename::AbstractString, sync::Bool=true)
             elseif tag == 2  # StreamHeader
                 xml = String(read(io, len))
                 @debug "    $xml"
-                streams[id] = Dict("nchannels"=>findtag(xml, "channel_count", Int),
-                                   "srate"=>findtag(xml, "nominal_srate", Float32),
-                                   "name"=>findtag(xml, "name"),
-                                   "type"=>findtag(xml, "type"))
-                streams[id]["dtype"] = DATA_TYPE[findtag(xml, "channel_format")]
+                # Add header data to stream dictionary
+                streams[id] = Dict(
+                    "name" => findtag(xml, "name"),
+                    "type" => findtag(xml, "type"),
+                    "nchannels" => findtag(xml, "channel_count", Int),
+                    "srate" => findtag(xml, "nominal_srate", Float32),
+                    "dtype" => DATA_TYPE[findtag(xml, "channel_format")],
+                    "source_id" => findtag(xml, "source_id"),
+                    "version" => findtag(xml, "version"),
+                    "created_at" => findtag(xml, "created_at"),
+                    "uid" => findtag(xml, "uid"),
+                    "session_id" => findtag(xml, "session_id"),
+                    "hostname" => findtag(xml, "hostname"),
+                    )
+                
                 streams[id]["data"] = 0
                 streams[id]["time"] = Array{Float64}(undef, 0)
                 streams[id]["clock"] = Float64[]
                 streams[id]["offset"] = Float64[]
+                streams[id]["header"] = xml
             elseif tag == 3  # Samples
                 mark(io)
                 nchannels = streams[id]["nchannels"]
@@ -80,6 +91,13 @@ function read_xdf(filename::AbstractString, sync::Bool=true)
             elseif tag == 6  # StreamFooter
                 xml = String(read(io, len))
                 @debug "    $xml"
+                # Add footer data to stream dictionary
+                streams[id]["first_timestamp"] = findtag(xml, "first_timestamp", Float32)
+                streams[id]["last_timestamp"] = findtag(xml, "last_timestamp", Float32)
+                streams[id]["sample_count"] = findtag(xml, "sample_count", Int)
+                streams[id]["measured_srate"] = findtag(xml, "measured_srate", Float32)
+                streams[id]["footer"] = xml
+                
             else  # unknown chunk type
                 skip(io, len)
             end
