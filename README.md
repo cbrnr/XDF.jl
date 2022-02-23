@@ -18,7 +18,6 @@ streams = read_xdf("minimal.xdf")
 ## Current status
 This package is currently in an early stage, so here's an overview of what doesn't work (yet):
 
-- [x] Streams with `String` data types are not supported yet
 - [ ] Time synchronization (via linear regression) is always performed, this will be changed to an optional parameter
 - [ ] The complete XML headers and footers of streams are not yet available in the output
 - [ ] Dejittering of streams with regular sampling rates is not available yet
