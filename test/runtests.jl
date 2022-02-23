@@ -19,6 +19,10 @@ using XDF, Downloads, Test
     @test streams[46202862]["srate"] == 10.0
     @test streams[46202862]["type"] == "StringMarker"
     @test size(streams[46202862]["data"]) == (9, 1)
+    @test startswith(streams[46202862]["data"][1, 1], "<?xml version")
+    @test endswith(streams[46202862]["data"][1, 1], "</info>")
+    @test streams[46202862]["data"][2:end, 1] == ["Hello", "World", "from", "LSL", "Hello",
+                                                  "World", "from", "LSL"]
 end
 
 @testset "XDF file with clock resets" begin

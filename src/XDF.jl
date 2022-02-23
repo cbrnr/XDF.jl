@@ -110,11 +110,6 @@ function read_xdf(filename::AbstractString, sync::Bool=true)
                 nchannels = streams[id]["nchannels"]
                 dtype = streams[id]["dtype"]
                 nsamples = read_varlen_int(io)
-                if streams[id]["dtype"] === String  # TODO: string samples
-                    reset(io)
-                    skip(io, len)
-                    continue
-                end
                 for i in 1:nsamples
                     if read(io, UInt8) == 8  # optional timestamp available
                         streams[id]["time"][index[id]] = read(io, Float64)
@@ -123,7 +118,11 @@ function read_xdf(filename::AbstractString, sync::Bool=true)
                         previous = index[id] == 1 ? 0 : streams[id]["time"][index[id] - 1]
                         streams[id]["time"][index[id]] = previous + delta
                     end
-                    streams[id]["data"][index[id], :] = reinterpret(dtype, read(io, sizeof(dtype) * nchannels))
+                    if streams[id]["dtype"] === String
+                        streams[id]["data"][index[id], :] .= String(read(io, read_varlen_int(io)))
+                    else
+                        streams[id]["data"][index[id], :] = reinterpret(dtype, read(io, sizeof(dtype) * nchannels))
+                    end
                     index[id] += 1
                 end
             end
