@@ -119,7 +119,7 @@ function read_xdf(filename::AbstractString, sync::Bool=true)
                         streams[id]["time"][index[id]] = previous + delta
                     end
                     if streams[id]["dtype"] === String
-                        streams[id]["data"][index[id]] = String(read(io, read_varlen_int(io)))
+                        streams[id]["data"][index[id], :] .= String(read(io, read_varlen_int(io)))
                     else
                         streams[id]["data"][index[id], :] = reinterpret(dtype, read(io, sizeof(dtype) * nchannels))
                     end
