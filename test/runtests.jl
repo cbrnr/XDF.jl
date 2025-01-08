@@ -14,15 +14,17 @@ using XDF, Downloads, Test
     @test endswith(streams[0]["header"], "</uid></info>")
     @test startswith(streams[0]["footer"], "<?xml version=\"1.0\"?>")
     @test endswith(streams[0]["footer"], "</clock_offsets></info>")
-    @test streams[0]["data"] == [192 255 238
-                                  12  22  32
-                                  13  23  33
-                                  14  24  34
-                                  15  25  35
-                                  12  22  32
-                                  13  23  33
-                                  14  24  34
-                                  15  25  35]
+    @test streams[0]["data"] == [
+        192 255 238
+        12 22 32
+        13 23 33
+        14 24 34
+        15 25 35
+        12 22 32
+        13 23 33
+        14 24 34
+        15 25 35
+    ]
 
     @test 46202862 in keys(streams)
     @test streams[46202862]["name"] == "SendDataString"
@@ -37,8 +39,8 @@ using XDF, Downloads, Test
     @test size(streams[46202862]["data"]) == (9, 1)
     @test startswith(streams[46202862]["data"][1, 1], "<?xml version")
     @test endswith(streams[46202862]["data"][1, 1], "</info>")
-    @test streams[46202862]["data"][2:end, 1] == ["Hello", "World", "from", "LSL", "Hello",
-                                                  "World", "from", "LSL"]
+    @test streams[46202862]["data"][2:end, 1] ==
+        ["Hello", "World", "from", "LSL", "Hello", "World", "from", "LSL"]
 end
 
 @testset "XDF file with clock resets" begin

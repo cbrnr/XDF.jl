@@ -7,22 +7,24 @@ export read_xdf
 
 using Logging: @info, @debug
 
+CHUNK_TYPE = Dict(
+    1 => "FileHeader",
+    2 => "StreamHeader",
+    3 => "Samples",
+    4 => "ClockOffset",
+    5 => "Boundary",
+    6 => "StreamFooter",
+)
 
-CHUNK_TYPE = Dict(1=>"FileHeader",
-                  2=>"StreamHeader",
-                  3=>"Samples",
-                  4=>"ClockOffset",
-                  5=>"Boundary",
-                  6=>"StreamFooter")
-
-DATA_TYPE = Dict("int8"=>Int8,
-                 "int16"=>Int16,
-                 "int32"=>Int32,
-                 "int64"=>Int64,
-                 "float32"=>Float32,
-                 "double64"=>Float64,
-                 "string"=>String)
-
+DATA_TYPE = Dict(
+    "int8" => Int8,
+    "int16" => Int16,
+    "int32" => Int32,
+    "int64" => Int64,
+    "float32" => Float32,
+    "double64" => Float64,
+    "string" => String,
+)
 
 """
     read_xdf(filename::AbstractString, sync::Bool=true)
@@ -30,7 +32,7 @@ DATA_TYPE = Dict("int8"=>Int8,
 Read XDF file and optionally sync streams (default true).
 """
 function read_xdf(filename::AbstractString, sync::Bool=true)
-    streams = Dict{Int, Any}()
+    streams = Dict{Int,Any}()
     counter = Dict(zip(keys(CHUNK_TYPE), zeros(Int, length(CHUNK_TYPE))))  # count chunks
 
     open(filename) do io
@@ -123,9 +125,13 @@ function read_xdf(filename::AbstractString, sync::Bool=true)
                         streams[id]["time"][index[id]] = previous + delta
                     end
                     if streams[id]["dtype"] === String
-                        streams[id]["data"][index[id], :] .= String(read(io, read_varlen_int(io)))
+                        streams[id]["data"][index[id], :] .= String(
+                            read(io, read_varlen_int(io))
+                        )
                     else
-                        streams[id]["data"][index[id], :] = reinterpret(dtype, read(io, sizeof(dtype) * nchannels))
+                        streams[id]["data"][index[id], :] = reinterpret(
+                            dtype, read(io, sizeof(dtype) * nchannels)
+                        )
                     end
                     index[id] += 1
                 end
@@ -152,7 +158,6 @@ function read_xdf(filename::AbstractString, sync::Bool=true)
     return streams
 end
 
-
 "Read variable-length integer."
 function read_varlen_int(io::IO)
     nbytes = read(io, Int8)
@@ -165,14 +170,12 @@ function read_varlen_int(io::IO)
     end
 end
 
-
 "Find XML tag and return its content (optionally converted to specified type)."
 function findtag(xml::AbstractString, tag::AbstractString, type=String::DataType)
     m = match(Regex("<$tag>(.*)</$tag>"), xml)
     content = isnothing(m) ? nothing : m[1]
     return isnothing(content) || type == String ? content : parse(type, content)
 end
-
 
 "Synchronize clock values by their given offsets."
 function sync_clock(time::Array{Float64,1}, offsets::Array{Float64,2})
