@@ -70,4 +70,8 @@ end
     @test startswith(streams[2]["footer"], "<?xml version=\"1.0\"?>")
     @test endswith(streams[2]["footer"], "</clock_offsets></info>")
     @test size(streams[2]["data"]) == (27815, 8)
+    d_stream = XDF.dejitter(streams[2])
+    @test d_stream["segments"][1] == (1, 12875)
+    @test d_stream["segments"][2] == (12876, 27815)
+end
 end
