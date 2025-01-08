@@ -1,4 +1,4 @@
-# Authors: Clemens Brunner
+# Authors: Clemens Brunner, Alberto Barradas
 # License: BSD (3-clause)
 
 module XDF
@@ -182,4 +182,59 @@ function sync_clock(time::Array{Float64,1}, offsets::Array{Float64,2})
     return time .+ (coefs[1] .+ coefs[2] .* time)
 end
 
+"""
+    dejitter(stream::Dict, max_time::Float64=1, max_samples::Int=500)
+    Calculate timestamps assuming constant intervals within each continuous segment in a stream. Chooses the minimum of the time difference and the number of samples as indicator for a new segment.
+    args:
+        stream: Dict
+            Stream dictionary.
+        max_time: Float64
+            Maximum time difference between two consecutive samples (default: 1 second).
+        max_samples: Int
+            Maximum number of samples in a segment (default: 500 samples).
+    return:
+        Dict: Stream dictionary with updated timestamps.
+
+Example:
+```julia
+stream = read_xdf(Downloads.download("https://github.com/xdf-modules/example-files/blob/master/data_with_clock_resets.xdf?raw=true"))[2]
+stream = dejitter(stream, 1.0, 500) # process segments with a maximum time difference of 1 second or 500 samples
+stream["segments"] # list of segments
+stream["nominal_srate"] # recalculated nominal sampling rate
+```
+"""
+function dejitter(stream::Dict; max_time::Float64=1.0, max_samples::Int=500)
+    srate = stream["srate"]
+    if srate == 0
+        @warn "Attempting to dejitter marker streams or streams with zero sampling rate. Skipping."
+        return stream
+    end
+    nsamples = size(stream["data"], 1)
+    if nsamples == 0
+        @warn "Attempting to dejitter empty stream. Skipping."
+        return stream
+    end
+    stream["nominal_srate"] = 0 # Recalculated if possible
+    stream["segments"] = []
+    time = stream["time"]
+    breaks = [1; findall(diff(time) .> min.(max_time, max_samples .* (1 / srate)))]
+    seg_starts = breaks
+    seg_ends = [breaks[2:end] .- 1; nsamples]
+    for (start, stop) in zip(seg_starts, seg_ends)
+        push!(stream["segments"], (start, stop))
+        idx = [start:stop;]
+        X = hcat(ones(length(idx)), time[idx])
+        y = time[idx]
+        coefs = X \ y
+        stream["time"][idx] = coefs[1] .+ coefs[2] .* time[idx]
+    end
+    # Recalculate nominal sampling rate
+    counts = (seg_ends .- seg_starts) .+ 1
+    durations = diff([time[seg_starts]; time[seg_ends[end]]])
+    stream["nominal_srate"] = sum(counts) / sum(durations)
+    if stream["srate"] != 0 && abs(stream["srate"] - stream["nominal_srate"]) > 1e-1
+        @warn "After dejittering: Nominal sampling rate differs from specified rate: $(stream["nominal_srate"]) vs. $(stream["srate"]) Hz"
+    end
+    return stream
+end
 end
