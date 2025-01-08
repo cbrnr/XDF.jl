@@ -1,4 +1,4 @@
-using XDF, Downloads, Test
+using XDF, Downloads, Test, SHA
 
 @testset "Minimal XDF file" begin
     url = "https://github.com/xdf-modules/example-files/blob/master/minimal.xdf?raw=true"
@@ -74,10 +74,9 @@ end
     @test d_stream["segments"][1] == (1, 12875)
     @test d_stream["segments"][2] == (12876, 27815)
 end
-end
 
 @testset "strings" begin
-    file = "./test/testdata/test_chunk3.xdf"
+    file = "testdata/test_chunk3.xdf"
     @testset "strings.sha256" begin
         open(file) do f
             @test bytes2hex(sha256(f)) ==
@@ -88,25 +87,25 @@ end
         using XDF: XDF
         streams = XDF.read_xdf(file)
     end
-    # @testset "strings.dejitter" begin
-    #     using XDF: XDF
-    #     streams = XDF.read_xdf(file)
-    #     s1 = streams[3735928559]
-    #     @test s1["type"] == "Marker"
-    #     @test s1["nchannels"] == 2
-    #     @test s1["srate"] == 1000.0
-    #     @test s1["dtype"] == String
-    #     @test size(s1["data"]) == (1, 2)
-    #     @test s1["data"] == ["Marker 0A" "Marker 0A"]
-    #     s2 = streams[46202862]
-    #     @test s2["type"] == "EEG"
-    #     @test s2["nchannels"] == 64
-    #     @test s2["srate"] == 1000.0
-    #     @test s2["dtype"] == Float64
-    #     @test size(s2["data"]) == (1, 64)
-    #     @test sum(s2["data"]) == 0.0
-    #     sgs = [XDF.dejitter(streams[k])["segments"] for k in keys(streams)]
-    #     @test sgs[1] == [(1, 1)]
-    #     @test sgs[2] == [(1, 1)]
-    # end
+    @testset "strings.dejitter" begin
+        using XDF: XDF
+        streams = XDF.read_xdf(file)
+        s1 = streams[3735928559]
+        @test s1["type"] == "Marker"
+        @test s1["nchannels"] == 2
+        @test s1["srate"] == 1000.0
+        @test s1["dtype"] == String
+        @test size(s1["data"]) == (1, 2)
+        @test s1["data"] == ["Marker 0A" "Marker 0A"]
+        s2 = streams[46202862]
+        @test s2["type"] == "EEG"
+        @test s2["nchannels"] == 64
+        @test s2["srate"] == 1000.0
+        @test s2["dtype"] == Float64
+        @test size(s2["data"]) == (1, 64)
+        @test sum(s2["data"]) == 0.0
+        sgs = [XDF.dejitter(streams[k])["segments"] for k in keys(streams)]
+        @test sgs[1] == [(1, 1)]
+        @test sgs[2] == [(1, 1)]
+    end
 end
