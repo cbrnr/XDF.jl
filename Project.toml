@@ -1,7 +1,7 @@
 name = "XDF"
 uuid = "31bc19ec-0089-417f-990e-a2b5e7515868"
 authors = ["Clemens Brunner <clemens.brunner@gmail.com>"]
-version = "0.2.0"
+version = "1.0.0-DEV"
 
 [deps]
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
