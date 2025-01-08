@@ -87,7 +87,8 @@ end
         using XDF: XDF
         streams = XDF.read_xdf(file)
     end
-    @testset "strings.dejitter" begin
+
+    @testset "strings.markers" begin
         using XDF: XDF
         streams = XDF.read_xdf(file)
         s1 = streams[3735928559]
