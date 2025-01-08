@@ -167,6 +167,8 @@ function read_varlen_int(io::IO)
         read(io, UInt32)
     elseif nbytes == 8
         read(io, UInt64)
+    else
+        error("Invalid number of bytes for variable-length integer: $nbytes")
     end
 end
 
