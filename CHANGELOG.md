@@ -1,9 +1,10 @@
 ## [UNRELEASED] - 2025-01-08
 ### ✨ Added
  - Add dejitter function (by ([#13](https://github.com/cbrnr/XDF.jl/pull/13) by [Alberto Barradas](https://github.com/abcsds))
- - Add CI workflow for versions 1.11, 1.6 (LTS), and "pre".
+ - Add CI workflow for versions 1.11, 1.6 (LTS), and pre-release. (by ([#11](https://github.com/cbrnr/XDF.jl/pull/11) by [Alberto Barradas](https://github.com/abcsds)))
 ### 🌀 Changed
 - Reformat sources with [blue](https://github.com/JuliaDiff/BlueStyle) style
+
 
 ## [0.2.0] - 2022-02-23
 
