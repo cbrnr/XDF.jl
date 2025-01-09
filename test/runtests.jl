@@ -91,7 +91,7 @@ end
         @test s1["srate"] == 1000.0
         @test s1["dtype"] == String
         @test size(s1["data"]) == (1, 2)
-        @test s1["data"] == ["Marker 0A" "Marker 0A"]
+        @test s1["data"] == ["Marker 0A" "Marker 0B"]
         s2 = streams[46202862]
         @test s2["type"] == "EEG"
         @test s2["nchannels"] == 64
