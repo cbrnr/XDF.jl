@@ -18,13 +18,13 @@ permissions: # needed to allow julia-actions/cache to proactively delete old cac
 
 jobs:
   test:
-    name: Test / Julia ${{ toUpper(matrix.version) }}
+    name: Test / Julia ${{ matrix.version }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        version: ['lts', '1', 'pre']
+        version: ['LTS', '1', 'PRE']
         arch: [x64]
         os: [ubuntu-latest]
     steps:
