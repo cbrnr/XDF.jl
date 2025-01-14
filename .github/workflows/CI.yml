@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ['LTS', '1', 'PRE']
+        version: ['lts', '1', 'pre']
         arch: [x64]
         os: [ubuntu-latest]
     steps:
