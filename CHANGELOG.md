@@ -1,6 +1,6 @@
 ## [UNRELEASED] · YYYY-MM-DD
 ### ✨ Added
-- Add CI workflow for versions 1.11, 1.6 (LTS), and pre-release. (([#11](https://github.com/cbrnr/XDF.jl/pull/11) by [Alberto Barradas](https://github.com/abcsds)))
+- Add CI workflow ([#11](https://github.com/cbrnr/XDF.jl/pull/11) by [Alberto Barradas](https://github.com/abcsds))
 ### 🌀 Changed
 - Reformat sources with [Blue](https://github.com/JuliaDiff/BlueStyle) ([#12](https://github.com/cbrnr/XDF.jl/pull/12) by [Alberto Barradas](https://github.com/abcsds))
 
