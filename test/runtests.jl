@@ -73,7 +73,7 @@ end
 end
 
 @testset "strings" begin
-    file = "./test/testdata/test_chunk3.xdf"
+    file = "./testdata/test_chunk3.xdf"
     @testset "strings.sha256" begin
         open(file) do f
             @test bytes2hex(sha256(f)) ==
