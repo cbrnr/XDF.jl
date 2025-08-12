@@ -44,7 +44,7 @@ using XDF, Downloads, Test
 end
 
 @testset "XDF file with clock resets" begin
-    url = "https://github.com/xdf-modules/example-files/blob/master/data_with_clock_resets.xdf?raw=true"
+    url = "https://github.com/xdf-modules/example-files/blob/master/clock_resets.xdf?raw=true"
 
     streams = read_xdf(Downloads.download(url))
     @test 1 in keys(streams)
