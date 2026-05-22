@@ -6,6 +6,7 @@
 - Reformat sources with [Blue](https://github.com/JuliaDiff/BlueStyle) ([#12](https://github.com/cbrnr/XDF.jl/pull/12) by [Alberto Barradas](https://github.com/abcsds))
 ### 🐛 Fixed
 - Read one varlen-prefixed string per channel for multi-channel string streams instead of broadcasting a single value across all channels (resolves [#10](https://github.com/cbrnr/XDF.jl/issues/10), by [Alberto Barradas](https://github.com/abcsds))
+- Apply a single clock offset as a constant correction in `sync_clock` instead of running an underdetermined linear regression, matching pyxdf and resolving the timestamp discrepancy flagged on [xdf-modules/example-files#4](https://github.com/xdf-modules/example-files/pull/4) (by [Alberto Barradas](https://github.com/abcsds))
 
 ## [0.2.0] · 2022-02-23
 ### ✨ Added

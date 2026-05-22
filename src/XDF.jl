@@ -179,6 +179,13 @@ end
 
 "Synchronize clock values by their given offsets."
 function sync_clock(time::Array{Float64,1}, offsets::Array{Float64,2})
+    if size(offsets, 1) == 1
+        # Linear regression is underdetermined with a single offset point;
+        # Julia's `x \ y` falls back to the minimum-norm solution, producing
+        # a spurious slope. Match pyxdf and apply the lone offset as a
+        # constant correction (slope = 0).
+        return time .+ offsets[1, 2]
+    end
     x = hcat(ones(size(offsets, 1), 1), offsets[:, 1])
     y = offsets[:, 2]
     coefs = x \ y

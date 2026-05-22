@@ -98,4 +98,18 @@ end
         @test size(s2["data"]) == (1, 64)
         @test all(iszero, s2["data"])
     end
+    @testset "timestamps.raw" begin
+        streams = read_xdf(file, false)
+        @test streams[3735928559]["time"] == [17.0]
+        @test streams[46202862]["time"] == [17.0]
+        @test streams[3735928559]["clock"] == [6.1]
+        @test streams[3735928559]["offset"] == [-0.1]
+        @test streams[46202862]["clock"] == [6.1]
+        @test streams[46202862]["offset"] == [-0.1]
+    end
+    @testset "timestamps.synced" begin
+        streams = read_xdf(file, true)
+        @test streams[3735928559]["time"] ≈ [16.9] atol = 1e-12
+        @test streams[46202862]["time"] ≈ [16.9] atol = 1e-12
+    end
 end
