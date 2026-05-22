@@ -1,4 +1,4 @@
-using XDF, Downloads, Test
+using XDF, Downloads, Test, SHA
 
 @testset "Minimal XDF file" begin
     url = "https://github.com/xdf-modules/example-files/blob/master/minimal.xdf?raw=true"
@@ -70,4 +70,32 @@ end
     @test startswith(streams[2]["footer"], "<?xml version=\"1.0\"?>")
     @test endswith(streams[2]["footer"], "</clock_offsets></info>")
     @test size(streams[2]["data"]) == (27815, 8)
+end
+
+@testset "twochannel_string_marker.xdf" begin
+    file = "./testdata/twochannel_string_marker.xdf"
+    @testset "sha256" begin
+        open(file) do f
+            @test bytes2hex(sha256(f)) ==
+                "c730991efa078906117aa2accdca5f0ea11c54f43c3884770eba21e5a72edb82"
+        end
+    end
+    @testset "streams" begin
+        streams = read_xdf(file)
+        s1 = streams[3735928559]
+        @test s1["type"] == "Marker"
+        @test s1["nchannels"] == 2
+        @test s1["srate"] == 1000.0
+        @test s1["dtype"] == String
+        @test size(s1["data"]) == (1, 2)
+        @test s1["data"] == ["Marker 0A" "Marker 0B"]
+        @test s1["data"][1, 1] != s1["data"][1, 2]  # regression for #10
+        s2 = streams[46202862]
+        @test s2["type"] == "EEG"
+        @test s2["nchannels"] == 64
+        @test s2["srate"] == 1000.0
+        @test s2["dtype"] == Float64
+        @test size(s2["data"]) == (1, 64)
+        @test all(iszero, s2["data"])
+    end
 end
