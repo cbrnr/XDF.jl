@@ -1,4 +1,4 @@
-using XDF, Downloads, Test, SHA
+using XDF, Downloads, Test
 
 @testset "Minimal XDF file" begin
     url = "https://github.com/xdf-modules/example-files/blob/master/minimal.xdf?raw=true"
@@ -73,13 +73,8 @@ end
 end
 
 @testset "twochannel_string_marker.xdf" begin
-    file = "./testdata/twochannel_string_marker.xdf"
-    @testset "sha256" begin
-        open(file) do f
-            @test bytes2hex(sha256(f)) ==
-                "c730991efa078906117aa2accdca5f0ea11c54f43c3884770eba21e5a72edb82"
-        end
-    end
+    url = "https://github.com/xdf-modules/example-files/blob/master/twochannel_string_marker.xdf?raw=true"
+    file = Downloads.download(url)
     @testset "streams" begin
         streams = read_xdf(file)
         s1 = streams[3735928559]
