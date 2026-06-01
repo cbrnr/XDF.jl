@@ -108,3 +108,5 @@ end
         @test streams[46202862]["time"] ≈ [16.9] atol = 1e-12
     end
 end
+
+include("osf_files.jl")
