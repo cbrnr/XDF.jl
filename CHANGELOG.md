@@ -7,8 +7,8 @@
 - Reformat sources with [Blue](https://github.com/JuliaDiff/BlueStyle) ([#12](https://github.com/cbrnr/XDF.jl/pull/12) by [Alberto Barradas](https://github.com/abcsds))
 
 ### 🐛 Fixed
-- Read one varlen-prefixed string per channel for multi-channel string markers ([#23](https://github.com/cbrnr/XDF.jl/pull/23), resolves [#10](https://github.com/cbrnr/XDF.jl/issues/10), by [Alberto Barradas](https://github.com/abcsds))
-- Apply a single clock offset as a constant correction in `sync_clock` to match pyxdf ([#23](https://github.com/cbrnr/XDF.jl/pull/23) by [Alberto Barradas](https://github.com/abcsds))
+- Read one varlen-prefixed string per channel for multi-channel string markers ([#23](https://github.com/cbrnr/XDF.jl/pull/23) by [Alberto Barradas](https://github.com/abcsds))
+- Apply a single clock offset as a constant correction in `sync_clock` to match PyXDF ([#23](https://github.com/cbrnr/XDF.jl/pull/23) by [Alberto Barradas](https://github.com/abcsds))
 
 ## [0.2.0] · 2022-02-23
 
