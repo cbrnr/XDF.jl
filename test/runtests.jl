@@ -1,4 +1,6 @@
-using XDF, Downloads, Test
+using XDF, Downloads, Test, Logging
+
+disable_logging(Logging.Info)
 
 @testset "Minimal XDF file" begin
     url = "https://github.com/xdf-modules/example-files/blob/master/minimal.xdf?raw=true"
