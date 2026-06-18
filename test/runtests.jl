@@ -1,4 +1,6 @@
-using XDF, Downloads, Test
+using XDF, Downloads, Test, Logging
+
+disable_logging(Logging.Info)
 
 @testset "Minimal XDF file" begin
     url = "https://github.com/xdf-modules/example-files/blob/master/minimal.xdf?raw=true"
@@ -71,3 +73,42 @@ end
     @test endswith(streams[2]["footer"], "</clock_offsets></info>")
     @test size(streams[2]["data"]) == (27815, 8)
 end
+
+@testset "twochannel_string_marker.xdf" begin
+    url = "https://github.com/xdf-modules/example-files/blob/master/twochannel_string_marker.xdf?raw=true"
+    file = Downloads.download(url)
+    @testset "streams" begin
+        streams = read_xdf(file)
+        s1 = streams[3735928559]
+        @test s1["type"] == "Marker"
+        @test s1["nchannels"] == 2
+        @test s1["srate"] == 1000.0
+        @test s1["dtype"] == String
+        @test size(s1["data"]) == (1, 2)
+        @test s1["data"] == ["Marker 0A" "Marker 0B"]
+        @test s1["data"][1, 1] != s1["data"][1, 2]  # regression for #10
+        s2 = streams[46202862]
+        @test s2["type"] == "EEG"
+        @test s2["nchannels"] == 64
+        @test s2["srate"] == 1000.0
+        @test s2["dtype"] == Float64
+        @test size(s2["data"]) == (1, 64)
+        @test all(iszero, s2["data"])
+    end
+    @testset "timestamps.raw" begin
+        streams = read_xdf(file, false)
+        @test streams[3735928559]["time"] == [17.0]
+        @test streams[46202862]["time"] == [17.0]
+        @test streams[3735928559]["clock"] == [6.1]
+        @test streams[3735928559]["offset"] == [-0.1]
+        @test streams[46202862]["clock"] == [6.1]
+        @test streams[46202862]["offset"] == [-0.1]
+    end
+    @testset "timestamps.synced" begin
+        streams = read_xdf(file, true)
+        @test streams[3735928559]["time"] ≈ [16.9] atol = 1e-12
+        @test streams[46202862]["time"] ≈ [16.9] atol = 1e-12
+    end
+end
+
+include("osf_files.jl")
