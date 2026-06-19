@@ -1,4 +1,4 @@
-## [UNRELEASED] · YYYY-MM-DD
+## [0.2.1] · 2026-06-18
 
 ### ✨ Added
 - Add CI workflow ([#11](https://github.com/cbrnr/XDF.jl/pull/11) by [Alberto Barradas](https://github.com/abcsds))
